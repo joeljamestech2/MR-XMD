@@ -2,114 +2,175 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YouTube MP4 Downloader</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JOEL XMD | YOUTUBE SEARCH & DOWNLOADER</title>
 
   <style>
     body {
       margin: 0;
+      background: #000;
+      color: #fff;
       font-family: 'JetBrains Mono', monospace;
-      background: #0d0d0d;
-      color: white;
-      padding: 20px;
+      padding: 15px;
+      text-align: center;
     }
-    .container {
-      max-width: 500px;
-      margin: auto;
+    h1 {
+      color: #00d9ff;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
     }
-    input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
+    .search {
+      display: flex;
+      gap: 8px;
+      background: #111;
+      padding: 10px;
+      border-radius: 30px;
+    }
+    .search input {
+      flex: 1;
+      background: transparent;
       border: none;
-      margin-top: 10px;
-      background: #1a1a1a;
-      color: white;
-      font-size: 16px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
     }
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 15px;
+    .search button {
+      background: #00d9ff;
       border: none;
-      border-radius: 10px;
-      background: #ff0066;
-      color: white;
-      font-size: 16px;
+      padding: 8px 15px;
+      border-radius: 20px;
       font-weight: bold;
       cursor: pointer;
     }
-    .result {
-      margin-top: 20px;
+    .card {
       background: #111;
-      padding: 15px;
-      border-radius: 15px;
-    }
-    img {
-      width: 100%;
-      border-radius: 15px;
-      margin-top: 10px;
-    }
-    .download-btn {
-      display: block;
       margin-top: 15px;
-      padding: 12px;
-      background: #0099ff;
-      text-align: center;
-      color: white;
+      padding: 10px;
       border-radius: 10px;
-      font-size: 17px;
-      font-weight: 700;
+      text-align: left;
+    }
+    .card img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .actions button {
+      flex: 1;
+      background: #00d9ff;
+      padding: 10px;
+      border: none;
+      border-radius: 7px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .loading {
+      color: #00e1ff;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h2>YouTube MP4 Downloader</h2>
+<h1>JOEL XMD YT DOWNLOADER</h1>
 
-  <input id="ytlink" placeholder="Enter YouTube URL...">
-
-  <button onclick="getMp4()">Download MP4</button>
-
-  <div id="result"></div>
+<div class="search">
+  <input id="query" placeholder="Search or paste YouTube link...">
+  <button onclick="searchYT()">Search</button>
 </div>
 
+<div id="results"></div>
+
 <script>
-async function getMp4() {
-  const url = document.getElementById("ytlink").value.trim();
-  if (!url) {
-    alert("Enter a YouTube link!");
-    return;
-  }
+async function searchYT() {
+  const q = document.getElementById("query").value.trim();
+  const results = document.getElementById("results");
 
-  const api = `https://api.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${encodeURIComponent(url)}`;
+  if (!q) return alert("Enter search keyword or YouTube URL!");
 
-  document.getElementById("result").innerHTML = "<p>Processing... please wait.</p>";
+  results.innerHTML = `<p class="loading">Searching...</p>`;
+
+  const api = `https://corsproxy.io/?${encodeURIComponent(
+    `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(q)}`
+  )}`;
 
   try {
     const res = await fetch(api);
     const json = await res.json();
 
-    if (!json.success) {
-      document.getElementById("result").innerHTML = "<p>Invalid Link or Error.</p>";
+    if (!json.results || json.results.length === 0) {
+      results.innerHTML = `<p>No results found.</p>`;
       return;
     }
 
-    const r = json.result;
+    results.innerHTML = "";
 
-    document.getElementById("result").innerHTML = `
-      <div class="result">
-        <h3>${r.title}</h3>
-        <p>Quality: ${r.quality}</p>
-        <img src="${r.thumbnail}">
-        <a class="download-btn" href="${r.download_url}" onclick="window.location.href='${r.download_url}'">Download MP4</a>
-      </div>
-    `;
+    json.results.forEach(video => {
+      const card = document.createElement("div");
+      card.className = "card";
 
-  } catch (e) {
-    document.getElementById("result").innerHTML = "<p>Error fetching API!</p>";
+      card.innerHTML = `
+        <img src="${video.thumbnail}">
+        <h3>${video.title}</h3>
+        <p>${video.author}</p>
+        <p>${video.duration}</p>
+
+        <div class="actions">
+          <button onclick="downloadAudio('${video.url}')">AUDIO MP3</button>
+          <button onclick="downloadVideo('${video.url}')">VIDEO MP4</button>
+        </div>
+      `;
+
+      results.appendChild(card);
+    });
+
+  } catch (err) {
+    results.innerHTML = `<p>Error fetching results.</p>`;
+  }
+}
+
+// AUDIO DOWNLOAD
+async function downloadAudio(url) {
+  const api = `https://corsproxy.io/?${encodeURIComponent(
+    `https://api.giftedtech.web.id/api/download/dlmp3?apikey=gifted&url=${encodeURIComponent(url)}`
+  )}`;
+
+  try {
+    const res = await fetch(api);
+    const json = await res.json();
+
+    if (json.success && json.result.download_url) {
+      window.location = json.result.download_url; // stays inside APK WebView
+    } else {
+      alert("Audio download failed!");
+    }
+  } catch {
+    alert("Audio API error!");
+  }
+}
+
+// VIDEO DOWNLOAD
+async function downloadVideo(url) {
+  const api = `https://corsproxy.io/?${encodeURIComponent(
+    `https://api.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${encodeURIComponent(url)}`
+  )}`;
+
+  try {
+    const res = await fetch(api);
+    const json = await res.json();
+
+    if (json.success && json.result.download_url) {
+      window.location = json.result.download_url; // stays in APK
+    } else {
+      alert("Video download failed!");
+    }
+  } catch {
+    alert("Video API error!");
   }
 }
 </script>
