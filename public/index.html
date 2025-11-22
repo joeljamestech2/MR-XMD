@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube MP4 Downloader</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'JetBrains Mono', monospace;
+      background: #0d0d0d;
+      color: white;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      margin-top: 10px;
+      background: #1a1a1a;
+      color: white;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 10px;
+      background: #ff0066;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      background: #111;
+      padding: 15px;
+      border-radius: 15px;
+    }
+    img {
+      width: 100%;
+      border-radius: 15px;
+      margin-top: 10px;
+    }
+    .download-btn {
+      display: block;
+      margin-top: 15px;
+      padding: 12px;
+      background: #0099ff;
+      text-align: center;
+      color: white;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>YouTube MP4 Downloader</h2>
+
+  <input id="ytlink" placeholder="Enter YouTube URL...">
+
+  <button onclick="getMp4()">Download MP4</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+async function getMp4() {
+  const url = document.getElementById("ytlink").value.trim();
+  if (!url) {
+    alert("Enter a YouTube link!");
+    return;
+  }
+
+  const api = `https://api.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${encodeURIComponent(url)}`;
+
+  document.getElementById("result").innerHTML = "<p>Processing... please wait.</p>";
+
+  try {
+    const res = await fetch(api);
+    const json = await res.json();
+
+    if (!json.success) {
+      document.getElementById("result").innerHTML = "<p>Invalid Link or Error.</p>";
+      return;
+    }
+
+    const r = json.result;
+
+    document.getElementById("result").innerHTML = `
+      <div class="result">
+        <h3>${r.title}</h3>
+        <p>Quality: ${r.quality}</p>
+        <img src="${r.thumbnail}">
+        <a class="download-btn" href="${r.download_url}" onclick="window.location.href='${r.download_url}'">Download MP4</a>
+      </div>
+    `;
+
+  } catch (e) {
+    document.getElementById("result").innerHTML = "<p>Error fetching API!</p>";
+  }
+}
+</script>
+
+</body>
+</html>
