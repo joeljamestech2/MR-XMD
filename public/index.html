@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JOEL XMD | YOUTUBE SEARCH & DOWNLOADER</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JOEL XMD | MOVIE SEARCH & PLAYER</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     body {
@@ -16,15 +18,16 @@
     }
     h1 {
       color: #00d9ff;
-      font-size: 1.3rem;
-      margin-bottom: 1rem;
+      font-size: 1.4rem;
     }
+
     .search {
       display: flex;
       gap: 8px;
       background: #111;
       padding: 10px;
       border-radius: 30px;
+      margin-top: 10px;
     }
     .search input {
       flex: 1;
@@ -39,9 +42,10 @@
       border: none;
       padding: 8px 15px;
       border-radius: 20px;
-      font-weight: bold;
       cursor: pointer;
+      font-weight: bold;
     }
+
     .card {
       background: #111;
       margin-top: 15px;
@@ -53,21 +57,21 @@
       width: 100%;
       border-radius: 10px;
     }
-    .actions {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .actions button {
-      flex: 1;
+    .btn {
       background: #00d9ff;
-      padding: 10px;
       border: none;
+      padding: 10px;
       border-radius: 7px;
-      color: #000;
       font-weight: bold;
+      color: #000;
       cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .play-area video {
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 10px;
     }
     .loading {
       color: #00e1ff;
@@ -75,102 +79,98 @@
     }
   </style>
 </head>
+
 <body>
 
-<h1>JOEL XMD YT DOWNLOADER</h1>
+<h1>JOEL XMD MOVIE PLAYER</h1>
 
 <div class="search">
-  <input id="query" placeholder="Search or paste YouTube link...">
-  <button onclick="searchYT()">Search</button>
+  <input id="query" placeholder="Search for a movie...">
+  <button onclick="searchMovie()">Search</button>
 </div>
 
 <div id="results"></div>
 
 <script>
-async function searchYT() {
+// 🔍 SEARCH MOVIES
+async function searchMovie() {
   const q = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
 
-  if (!q) return alert("Enter search keyword or YouTube URL!");
+  if (!q) return alert("Enter movie name!");
 
   results.innerHTML = `<p class="loading">Searching...</p>`;
 
-  const api = `https://corsproxy.io/?${encodeURIComponent(
-    `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(q)}`
-  )}`;
-
   try {
+    const api = `https://movieapi.giftedtech.co.ke/api/search/${encodeURIComponent(q)}`;
     const res = await fetch(api);
     const json = await res.json();
 
-    if (!json.results || json.results.length === 0) {
+    if (!json.results || !json.results.items || json.results.items.length === 0) {
       results.innerHTML = `<p>No results found.</p>`;
       return;
     }
 
     results.innerHTML = "";
 
-    json.results.forEach(video => {
+    json.results.items.forEach(movie => {
       const card = document.createElement("div");
       card.className = "card";
 
       card.innerHTML = `
-        <img src="${video.thumbnail}">
-        <h3>${video.title}</h3>
-        <p>${video.author}</p>
-        <p>${video.duration}</p>
-
-        <div class="actions">
-          <button onclick="downloadAudio('${video.url}')">AUDIO MP3</button>
-          <button onclick="downloadVideo('${video.url}')">VIDEO MP4</button>
-        </div>
+        <img src="${movie.image}" alt="${movie.title}">
+        <h3>${movie.title}</h3>
+        <p>Year: ${movie.year}</p>
+        <button class="btn" onclick="loadMovie('${movie.id}')">Watch / Download</button>
       `;
-
       results.appendChild(card);
     });
 
   } catch (err) {
-    results.innerHTML = `<p>Error fetching results.</p>`;
+    results.innerHTML = `<p>Error fetching movie list.</p>`;
   }
 }
 
-// AUDIO DOWNLOAD
-async function downloadAudio(url) {
-  const api = `https://corsproxy.io/?${encodeURIComponent(
-    `https://api.giftedtech.web.id/api/download/dlmp3?apikey=gifted&url=${encodeURIComponent(url)}`
-  )}`;
+// 🎬 GET MOVIE STREAMING + DOWNLOAD
+async function loadMovie(id) {
+  const results = document.getElementById("results");
+  results.innerHTML = `<p class="loading">Loading movie info...</p>`;
 
   try {
+    const api = `https://movieapi.giftedtech.co.ke/api/movie/${id}`;
     const res = await fetch(api);
     const json = await res.json();
 
-    if (json.success && json.result.download_url) {
-      window.location = json.result.download_url; // stays inside APK WebView
-    } else {
-      alert("Audio download failed!");
+    if (!json || !json.sources) {
+      results.innerHTML = `<p>Movie details not found.</p>`;
+      return;
     }
-  } catch {
-    alert("Audio API error!");
-  }
-}
 
-// VIDEO DOWNLOAD
-async function downloadVideo(url) {
-  const api = `https://corsproxy.io/?${encodeURIComponent(
-    `https://api.giftedtech.web.id/api/download/dlmp4?apikey=gifted&url=${encodeURIComponent(url)}`
-  )}`;
+    let playHTML = `
+      <div class="card play-area">
+        <h2>${json.title}</h2>
+        <p>${json.description}</p>
 
-  try {
-    const res = await fetch(api);
-    const json = await res.json();
+        <video controls>
+          <source src="${json.sources[0].file}" type="video/mp4">
+        </video>
 
-    if (json.success && json.result.download_url) {
-      window.location = json.result.download_url; // stays in APK
-    } else {
-      alert("Video download failed!");
-    }
-  } catch {
-    alert("Video API error!");
+        <h3>Download Options:</h3>
+    `;
+
+    json.sources.forEach(src => {
+      playHTML += `
+        <button class="btn" onclick="window.location='${src.file}'">
+          Download ${src.quality}
+        </button>
+      `;
+    });
+
+    playHTML += `</div>`;
+    results.innerHTML = playHTML;
+
+  } catch (err) {
+    results.innerHTML = `<p>Error loading movie data.</p>`;
   }
 }
 </script>
