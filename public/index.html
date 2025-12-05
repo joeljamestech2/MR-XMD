@@ -1,177 +1,286 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JOEL XMD | MOVIE SEARCH & PLAYER</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JOEL XMD — MOVIE SEARCH & PLAYER</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: 'JetBrains Mono', monospace;
-      padding: 15px;
-      text-align: center;
-    }
-    h1 {
-      color: #00d9ff;
-      font-size: 1.4rem;
-    }
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: "JetBrains Mono", monospace;
+  }
 
-    .search {
-      display: flex;
-      gap: 8px;
-      background: #111;
-      padding: 10px;
-      border-radius: 30px;
-      margin-top: 10px;
-    }
-    .search input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #fff;
-      font-size: 1rem;
-      outline: none;
-    }
-    .search button {
-      background: #00d9ff;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+  header {
+    background: #0a0a0a;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid #111;
+    z-index: 10;
+  }
 
-    .card {
-      background: #111;
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 10px;
-      text-align: left;
-    }
-    .card img {
-      width: 100%;
-      border-radius: 10px;
-    }
-    .btn {
-      background: #00d9ff;
-      border: none;
-      padding: 10px;
-      border-radius: 7px;
-      font-weight: bold;
-      color: #000;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 10px;
-    }
-    .play-area video {
-      width: 100%;
-      margin-top: 10px;
-      border-radius: 10px;
-    }
-    .loading {
-      color: #00e1ff;
-      margin-top: 10px;
-    }
-  </style>
+  h1 { margin: 0; color: #00d9ff; font-size: 1.3rem; }
+
+  .toggle { cursor: pointer; padding: 8px 12px; background: #00d9ff; border-radius: 8px; color: #000; font-weight: bold; }
+
+  .search {
+    display: flex; gap: 8px; background: #111; padding: 10px; border-radius: 30px; margin: 10px;
+  }
+  .search input {
+    flex: 1; background: transparent; border: none; color: #fff; font-size: 1rem; outline: none;
+  }
+  .search button {
+    background: #00d9ff; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;
+  }
+
+  nav { display: flex; gap: 10px; padding: 10px; overflow-x: auto; background: #080808; }
+  nav button {
+    background: #111; border: 1px solid #222; padding: 8px 12px; border-radius: 20px; color: #fff; cursor: pointer;
+  }
+  nav button.active { background: #00d9ff; color: #000; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .card {
+    background: #111; border-radius: 10px; padding: 10px;
+  }
+  .card img { width: 100%; border-radius: 10px; }
+  .card h3 { font-size: 0.9rem; margin: 6px 0; }
+
+  #playerPage { padding: 10px; }
+
+  video { width: 100%; border-radius: 10px; background: #000; }
+
+  .btn {
+    background: #00d9ff;
+    padding: 10px;
+    border: none;
+    width: 100%;
+    color: #000;
+    border-radius: 7px;
+    margin-top: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .skeleton {
+    height: 130px;
+    background: linear-gradient(90deg, #111 25%, #222 50%, #111 75%);
+    background-size: 200%;
+    animation: loading 1.2s infinite;
+    border-radius: 7px;
+  }
+
+  @keyframes loading {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+</style>
 </head>
 
 <body>
 
-<h1>JOEL XMD MOVIE PLAYER</h1>
+<header>
+  <h1>JOEL XMD MOVIES</h1>
+  <div class="toggle" onclick="toggleTheme()">LIGHT</div>
+</header>
 
 <div class="search">
-  <input id="query" placeholder="Search for a movie...">
+  <input id="query" placeholder="Search movies or series...">
   <button onclick="searchMovie()">Search</button>
 </div>
 
+<nav>
+  <button class="active" onclick="loadHome()" id="tabHome">Home</button>
+  <button onclick="loadTrending()" id="tabTrending">Trending</button>
+  <button onclick="loadSeries()" id="tabSeries">Series</button>
+  <button onclick="loadContinue()" id="tabContinue">Continue</button>
+</nav>
+
 <div id="results"></div>
+<div id="playerPage"></div>
 
 <script>
-// 🔍 SEARCH MOVIES
+// PROXY WRAPPER
+function proxy(url) {
+  return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+}
+
+// DARK / LIGHT MODE
+function toggleTheme() {
+  document.body.style.background =
+    document.body.style.background === "white" ? "black" : "white";
+  document.body.style.color =
+    document.body.style.color === "black" ? "white" : "black";
+}
+
+// HOME
+function loadHome() {
+  setActive("tabHome");
+  document.getElementById("results").innerHTML =
+    "<p style='text-align:center; opacity:0.6;'>Search for any movie...</p>";
+}
+
+// TRENDING
+async function loadTrending() {
+  setActive("tabTrending");
+  const results = document.getElementById("results");
+  results.innerHTML = makeSkeletons();
+
+  try {
+    const res = await fetch(proxy("https://movieapi.giftedtech.co.ke/api/trending"));
+    const json = await res.json();
+
+    results.innerHTML = renderGrid(json.results.items);
+  } catch {
+    results.innerHTML = "<p>Error loading trending.</p>";
+  }
+}
+
+// SEARCH MOVIES
 async function searchMovie() {
   const q = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
 
   if (!q) return alert("Enter movie name!");
 
-  results.innerHTML = `<p class="loading">Searching...</p>`;
+  results.innerHTML = makeSkeletons();
 
   try {
-    const api = `https://movieapi.giftedtech.co.ke/api/search/${encodeURIComponent(q)}`;
-    const res = await fetch(api);
+    const res = await fetch(proxy(`https://movieapi.giftedtech.co.ke/api/search/${encodeURIComponent(q)}`));
     const json = await res.json();
 
-    if (!json.results || !json.results.items || json.results.items.length === 0) {
-      results.innerHTML = `<p>No results found.</p>`;
-      return;
-    }
-
-    results.innerHTML = "";
-
-    json.results.items.forEach(movie => {
-      const card = document.createElement("div");
-      card.className = "card";
-
-      card.innerHTML = `
-        <img src="${movie.image}" alt="${movie.title}">
-        <h3>${movie.title}</h3>
-        <p>Year: ${movie.year}</p>
-        <button class="btn" onclick="loadMovie('${movie.id}')">Watch / Download</button>
-      `;
-      results.appendChild(card);
-    });
-
-  } catch (err) {
-    results.innerHTML = `<p>Error fetching movie list.</p>`;
+    results.innerHTML = renderGrid(json.results.items);
+  } catch {
+    results.innerHTML = "<p>Error fetching movie list.</p>";
   }
 }
 
-// 🎬 GET MOVIE STREAMING + DOWNLOAD
-async function loadMovie(id) {
+// LIST SERIES
+async function loadSeries() {
+  setActive("tabSeries");
   const results = document.getElementById("results");
-  results.innerHTML = `<p class="loading">Loading movie info...</p>`;
+  results.innerHTML = makeSkeletons();
 
   try {
-    const api = `https://movieapi.giftedtech.co.ke/api/movie/${id}`;
-    const res = await fetch(api);
+    const res = await fetch(proxy("https://movieapi.giftedtech.co.ke/api/series"));
     const json = await res.json();
 
-    if (!json || !json.sources) {
-      results.innerHTML = `<p>Movie details not found.</p>`;
-      return;
-    }
+    results.innerHTML = renderGrid(json.results.items);
+  } catch {
+    results.innerHTML = "<p>Series not available.</p>";
+  }
+}
 
-    let playHTML = `
-      <div class="card play-area">
-        <h2>${json.title}</h2>
-        <p>${json.description}</p>
+// RENDER GRID
+function renderGrid(items) {
+  return `
+    <div class="grid">
+      ${items
+        .map(
+          (m) => `
+        <div class="card">
+          <img src="${m.image}">
+          <h3>${m.title}</h3>
+          <button class="btn" onclick="loadMovie('${m.id}')">Watch / Download</button>
+        </div>`
+        )
+        .join("")}
+    </div>
+  `;
+}
 
-        <video controls>
-          <source src="${json.sources[0].file}" type="video/mp4">
-        </video>
+// MAKE SKELETON LOADING
+function makeSkeletons() {
+  return `
+    <div class="grid">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  `;
+}
 
-        <h3>Download Options:</h3>
+// LOAD MOVIE
+async function loadMovie(id) {
+  const results = document.getElementById("results");
+  const player = document.getElementById("playerPage");
+
+  results.innerHTML = "";
+  player.innerHTML = `<p class="loading">Loading movie info...</p>`;
+
+  try {
+    const res = await fetch(proxy(`https://movieapi.giftedtech.co.ke/api/movie/${id}`));
+    const json = await res.json();
+
+    // Save Continue Watching
+    localStorage.setItem("continue", JSON.stringify(json));
+
+    let page = `
+      <h2>${json.title}</h2>
+      <p>${json.description}</p>
+
+      <video controls>
+        <source src="${proxy(json.sources[0].file)}" type="video/mp4">
+      </video>
+
+      <h3>Download Options:</h3>
     `;
 
-    json.sources.forEach(src => {
-      playHTML += `
-        <button class="btn" onclick="window.location='${src.file}'">
+    json.sources.forEach((src) => {
+      page += `
+        <button class="btn" onclick="window.location='${proxy(src.file)}'">
           Download ${src.quality}
         </button>
       `;
     });
 
-    playHTML += `</div>`;
-    results.innerHTML = playHTML;
+    player.innerHTML = page;
 
-  } catch (err) {
-    results.innerHTML = `<p>Error loading movie data.</p>`;
+  } catch {
+    player.innerHTML = "<p>Error loading movie.</p>";
   }
+}
+
+// CONTINUE WATCHING
+function loadContinue() {
+  setActive("tabContinue");
+
+  const data = JSON.parse(localStorage.getItem("continue"));
+  const results = document.getElementById("results");
+
+  if (!data) {
+    results.innerHTML = "<p>No continue data.</p>";
+    return;
+  }
+
+  results.innerHTML = `
+    <div class="card">
+      <img src="${data.image}">
+      <h3>${data.title}</h3>
+      <button class="btn" onclick="loadMovie('${data.id}')">Resume Watch</button>
+    </div>
+  `;
+}
+
+// SET ACTIVE TAB
+function setActive(id) {
+  document.querySelectorAll("nav button").forEach((b) => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
 </script>
 
