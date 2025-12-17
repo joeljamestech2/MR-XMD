@@ -7,131 +7,116 @@
 
 <style>
 :root {
-  --bg: #efeae2;
+  --bg: #e5ddd5;
   --header: #075e54;
   --out: #dcf8c6;
   --in: #ffffff;
   --bar: #f0f0f0;
 }
 
-* {
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-}
+* { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont; }
+body { margin:0; background:var(--bg); }
 
-body {
-  margin: 0;
-  background: var(--bg);
-}
-
-/* HEADER */
 .header {
   background: var(--header);
-  color: white;
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  color:white;
+  padding: 12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  position: sticky;
+  top:0;
+  z-index: 10;
 }
 
 .header img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width:40px; height:40px; border-radius:50%;
 }
 
-.header .info h4 {
-  margin: 0;
-  font-size: 16px;
-}
+.header .info h4 { margin:0; font-size:16px; }
+.header .info span { font-size:12px; opacity:.8; }
 
-.header .info span {
-  font-size: 12px;
-  opacity: .8;
-}
-
-/* CHAT */
 .chat {
-  padding: 12px;
+  padding:12px;
   height: calc(100vh - 130px);
   overflow-y: auto;
+  display:flex;
+  flex-direction: column;
+  gap:6px;
 }
 
 .msg {
-  max-width: 75%;
-  padding: 8px 10px;
-  margin: 6px 0;
-  border-radius: 8px;
-  font-size: 14px;
+  max-width:75%;
+  padding:8px 10px;
+  border-radius: 16px;
+  font-size:14px;
   position: relative;
+  word-break: break-word;
+  display: inline-block;
 }
 
-.in {
-  background: var(--in);
-  border-top-left-radius: 0;
-}
-
-.out {
-  background: var(--out);
-  margin-left: auto;
-  border-top-right-radius: 0;
-}
+.in { background: var(--in); border-top-left-radius:0; align-self:flex-start; }
+.out { background: var(--out); border-top-right-radius:0; align-self:flex-end; }
 
 .time {
-  font-size: 10px;
-  color: #555;
-  text-align: right;
+  font-size:10px;
+  color:#555;
+  text-align:right;
+  margin-top:4px;
 }
 
-/* INPUT BAR */
 .input-bar {
   background: var(--bar);
-  padding: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  padding:6px;
+  display:flex;
+  align-items:center;
+  gap:6px;
 }
 
-.icon {
-  font-size: 20px;
-  padding: 6px;
-  opacity: .7;
-}
+.icon { font-size:22px; padding:6px; cursor:pointer; opacity:.8; }
 
 .textbox {
-  flex: 1;
-  background: white;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  gap: 6px;
+  flex:1;
+  background:white;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  padding:4px 8px;
+  gap:6px;
 }
 
 .textbox input {
-  border: none;
-  outline: none;
-  flex: 1;
-  font-size: 14px;
-  padding: 6px;
+  border:none;
+  outline:none;
+  flex:1;
+  font-size:14px;
+  padding:6px;
 }
 
-.send,
-.mic {
-  background: #075e54;
-  color: white;
-  border: none;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  font-size: 18px;
+.send, .mic {
+  background:#075e54;
+  color:white;
+  border:none;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  font-size:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+img.message-img {
+  max-width: 200px;
+  border-radius: 12px;
+  margin-top:4px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <img src="/icon/user.jpg">
   <div class="info">
@@ -140,49 +125,68 @@ body {
   </div>
 </div>
 
-<!-- CHAT -->
 <div class="chat" id="chat"></div>
 
-<!-- INPUT BAR -->
 <div class="input-bar">
-  <div class="icon">＋</div>
-
+  <div class="icon" id="plus">＋</div>
   <div class="textbox">
-    <span class="icon">😊</span>
+    <span class="icon" id="emoji">😊</span>
     <input id="input" placeholder="Type a message" />
-    <span class="icon">📎</span>
-    <span class="icon">📷</span>
+    <span class="icon" id="attach">📎</span>
+    <span class="icon" id="camera">📷</span>
   </div>
-
   <button class="mic" id="send">🎤</button>
 </div>
+
+<input type="file" id="fileInput" style="display:none" />
+<input type="file" id="imageInput" accept="image/*" style="display:none" />
 
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 const send = document.getElementById("send");
+const fileInput = document.getElementById("fileInput");
+const imageInput = document.getElementById("imageInput");
 
 function timeNow() {
   const d = new Date();
-  return d.getHours().toString().padStart(2,'0') + ":" +
-         d.getMinutes().toString().padStart(2,'0');
+  return d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
 }
 
-function addMsg(text, type) {
+// --- Persistent storage ---
+function saveMessages() {
+  localStorage.setItem("chatMessages", chat.innerHTML);
+}
+
+function loadMessages() {
+  const data = localStorage.getItem("chatMessages");
+  if(data) chat.innerHTML = data;
+}
+
+function addMsg(content, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
-  div.innerHTML = `
-    ${text.replace(/\n/g,"<br>")}
-    <div class="time">${timeNow()}</div>
-  `;
+
+  // handle images/files
+  if (typeof content === "string") {
+    div.innerHTML = content.replace(/\n/g,"<br>") + `<div class="time">${timeNow()}</div>`;
+  } else if(content.type === "image") {
+    div.innerHTML = `<img src="${content.src}" class="message-img"><div class="time">${timeNow()}</div>`;
+  } else if(content.type === "file") {
+    div.innerHTML = `<a href="${content.src}" download>${content.name}</a><div class="time">${timeNow()}</div>`;
+  } else if(content.type === "voice") {
+    div.innerHTML = `<audio controls src="${content.src}"></audio><div class="time">${timeNow()}</div>`;
+  }
+
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
+  saveMessages();
 }
 
+// --- Send text message ---
 async function sendMsg() {
   const text = input.value.trim();
-  if (!text) return;
-
+  if(!text) return;
   input.value = "";
   addMsg(text, "out");
 
@@ -191,16 +195,35 @@ async function sendMsg() {
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({ message: text })
   });
-
   const data = await res.json();
   addMsg(data.reply || "No reply", "in");
 }
 
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter") sendMsg();
-});
-
+// --- Event listeners ---
+input.addEventListener("keydown", e => { if(e.key==="Enter") sendMsg(); });
 send.onclick = sendMsg;
+
+document.getElementById("attach").onclick = () => fileInput.click();
+document.getElementById("camera").onclick = () => imageInput.click();
+
+fileInput.onchange = (e) => {
+  const file = e.target.files[0];
+  if(file){
+    const url = URL.createObjectURL(file);
+    addMsg({type:"file", src:url, name:file.name}, "out");
+  }
+};
+
+imageInput.onchange = (e) => {
+  const file = e.target.files[0];
+  if(file){
+    const url = URL.createObjectURL(file);
+    addMsg({type:"image", src:url}, "out");
+  }
+};
+
+// --- Load messages on start ---
+loadMessages();
 </script>
 
 </body>
