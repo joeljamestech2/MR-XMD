@@ -8,34 +8,33 @@ const yts = async (m, gss) => {
     : "";
 
   const validCommands = ["yts", "ytsearch"];
-
   if (!validCommands.includes(cmd)) return;
 
   const searchQuery = m.body.split(" ").slice(1).join(" ");
   if (!searchQuery) {
-    await gss.sendMessage(
+    await gss.relayMessage(
       m.from,
-      {
-        text: "Nyaa~! ❌ You forgot to tell me what to search for! 🥺 Please add a query after the command, pretty please~"
-      },
-      { quoted: m }
+      { conversation: "Nyaa~! ❌ You forgot to tell me what to search for! 🥺 Please add a query after the command, pretty please~" }
     );
     return;
   }
 
+  // Send immediate feedback to user
+  await gss.relayMessage(m.from, { conversation: `🔎 Searching YouTube for: "${searchQuery}" ... Please wait up to 1 minute ⏳` });
+
   const apiUrl = `https://www.dark-yasiya-api.site/search/yt?text=${encodeURIComponent(searchQuery)}`;
 
   try {
-    const response = await axios.get(apiUrl);
+    // Wait up to 1 minute for API
+    const response = await axios.get(apiUrl, { timeout: 60000 });
     const apiData = response.data;
 
     if (apiData.status && apiData.result) {
       const videos = apiData.result.data;
       if (!videos || videos.length === 0) {
-        await gss.sendMessage(
+        await gss.relayMessage(
           m.from,
-          { text: "Aww~ ❌ I couldn’t find anything for that search... 😿 Please try something else, my dear!" },
-          { quoted: m }
+          { conversation: "Aww~ ❌ I couldn’t find anything for that search... 😿 Please try something else, my dear!" }
         );
         return;
       }
@@ -55,36 +54,20 @@ const yts = async (m, gss) => {
         message += `~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n`;
       });
 
-      const messagePayload = {
-        text: message,
-        contextInfo: {
-          externalAdReply: {
-            title: "ᴊᴏᴇʟ xᴍᴅ ʙᴏᴛ",
-            body: "ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʟᴏʀᴅ ᴊᴏᴇʟ",
-            thumbnailUrl:
-              "https://raw.githubusercontent.com/joeljamestech2/JOEL-XMD/refs/heads/main/mydata/media/joelXbot.jpg",
-            sourceUrl: "https://youtube.com/@joeljamestech255",
-            mediaType: 1,
-            renderLargerThumbnail: true
-          }
-        }
-      };
-
-      await gss.sendMessage(m.from, messagePayload, { quoted: m });
+      await gss.relayMessage(m.from, { conversation: message });
     } else {
-      await gss.sendMessage(
+      await gss.relayMessage(
         m.from,
-        { text: "Nyaa~ ❌ Something went wrong while fetching the videos... 😿 I'll try again soon, okay?!" },
-        { quoted: m }
+        { conversation: "Nyaa~ ❌ Something went wrong while fetching the videos... 😿 I'll try again soon, okay?!" }
       );
     }
   } catch (error) {
     console.error("Error in YTS Command:", error.message || error);
-    await gss.sendMessage(
-      m.from,
-      { text: "Waaah~! ❌ I ran into a lil' problem while searching... 😿 Please try again in a bit, pretty please?" },
-      { quoted: m }
-    );
+    const timeoutMsg = error.code === "ECONNABORTED"
+      ? "⏳ Nyaa~ The search took too long (over 1 minute)... 😿 Please try again!"
+      : "Waaah~! ❌ I ran into a lil' problem while searching... 😿 Please try again in a bit, pretty please?";
+    
+    await gss.relayMessage(m.from, { conversation: timeoutMsg });
   }
 };
 
