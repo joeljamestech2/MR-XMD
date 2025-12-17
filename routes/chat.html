@@ -29,10 +29,7 @@ body { margin:0; background:var(--bg); }
   z-index: 10;
 }
 
-.header img {
-  width:40px; height:40px; border-radius:50%;
-}
-
+.header img { width:40px; height:40px; border-radius:50%; }
 .header .info h4 { margin:0; font-size:16px; }
 .header .info span { font-size:12px; opacity:.8; }
 
@@ -41,7 +38,7 @@ body { margin:0; background:var(--bg); }
   height: calc(100vh - 130px);
   overflow-y: auto;
   display:flex;
-  flex-direction: column;
+  flex-direction: column-reverse; /* bottom-up */
   gap:6px;
 }
 
@@ -53,17 +50,13 @@ body { margin:0; background:var(--bg); }
   position: relative;
   word-break: break-word;
   display: inline-block;
+  cursor: default;
 }
 
 .in { background: var(--in); border-top-left-radius:0; align-self:flex-start; }
 .out { background: var(--out); border-top-right-radius:0; align-self:flex-end; }
 
-.time {
-  font-size:10px;
-  color:#555;
-  text-align:right;
-  margin-top:4px;
-}
+.time { font-size:10px; color:#555; text-align:right; margin-top:4px; }
 
 .input-bar {
   background: var(--bar);
@@ -85,14 +78,7 @@ body { margin:0; background:var(--bg); }
   gap:6px;
 }
 
-.textbox input {
-  border:none;
-  outline:none;
-  flex:1;
-  font-size:14px;
-  padding:6px;
-}
-
+.textbox input { border:none; outline:none; flex:1; font-size:14px; padding:6px; }
 .send, .mic {
   background:#075e54;
   color:white;
@@ -107,10 +93,37 @@ body { margin:0; background:var(--bg); }
   cursor:pointer;
 }
 
-img.message-img {
+img.message-img, video.message-video {
   max-width: 200px;
   border-radius: 12px;
   margin-top:4px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+img.message-img:hover, video.message-video:hover { transform: scale(1.03); }
+
+/* FULL SCREEN MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0; top:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.9);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.modal-content img, .modal-content video {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
 }
 </style>
 </head>
@@ -139,7 +152,12 @@ img.message-img {
 </div>
 
 <input type="file" id="fileInput" style="display:none" />
-<input type="file" id="imageInput" accept="image/*" style="display:none" />
+<input type="file" id="imageInput" accept="image/*,video/*" style="display:none" />
+
+<!-- FULL SCREEN MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content" id="modalContent"></div>
+</div>
 
 <script>
 const chat = document.getElementById("chat");
@@ -147,6 +165,8 @@ const input = document.getElementById("input");
 const send = document.getElementById("send");
 const fileInput = document.getElementById("fileInput");
 const imageInput = document.getElementById("imageInput");
+const modal = document.getElementById("modal");
+const modalContent = document.getElementById("modalContent");
 
 function timeNow() {
   const d = new Date();
@@ -154,33 +174,53 @@ function timeNow() {
 }
 
 // --- Persistent storage ---
-function saveMessages() {
-  localStorage.setItem("chatMessages", chat.innerHTML);
-}
-
+function saveMessages() { localStorage.setItem("chatMessages", chat.innerHTML); }
 function loadMessages() {
   const data = localStorage.getItem("chatMessages");
   if(data) chat.innerHTML = data;
 }
 
+// --- Add message ---
 function addMsg(content, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
 
-  // handle images/files
   if (typeof content === "string") {
     div.innerHTML = content.replace(/\n/g,"<br>") + `<div class="time">${timeNow()}</div>`;
   } else if(content.type === "image") {
     div.innerHTML = `<img src="${content.src}" class="message-img"><div class="time">${timeNow()}</div>`;
+  } else if(content.type === "video") {
+    div.innerHTML = `<video src="${content.src}" class="message-video" controls></video><div class="time">${timeNow()}</div>`;
   } else if(content.type === "file") {
     div.innerHTML = `<a href="${content.src}" download>${content.name}</a><div class="time">${timeNow()}</div>`;
-  } else if(content.type === "voice") {
-    div.innerHTML = `<audio controls src="${content.src}"></audio><div class="time">${timeNow()}</div>`;
   }
 
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
+  // Add at the top of flex column-reverse container
+  chat.prepend(div);
   saveMessages();
+
+  // Auto scroll to bottom (latest message)
+  chat.scrollTop = chat.scrollHeight;
+
+  // Fullscreen preview
+  const media = div.querySelector("img, video");
+  if(media){
+    media.onclick = () => {
+      modalContent.innerHTML = "";
+      if(content.type==="video"){
+        const vid = document.createElement("video");
+        vid.src = content.src;
+        vid.controls = true;
+        vid.autoplay = true;
+        modalContent.appendChild(vid);
+      } else {
+        const img = document.createElement("img");
+        img.src = content.src;
+        modalContent.appendChild(img);
+      }
+      modal.style.display = "flex";
+    }
+  }
 }
 
 // --- Send text message ---
@@ -202,7 +242,6 @@ async function sendMsg() {
 // --- Event listeners ---
 input.addEventListener("keydown", e => { if(e.key==="Enter") sendMsg(); });
 send.onclick = sendMsg;
-
 document.getElementById("attach").onclick = () => fileInput.click();
 document.getElementById("camera").onclick = () => imageInput.click();
 
@@ -218,11 +257,15 @@ imageInput.onchange = (e) => {
   const file = e.target.files[0];
   if(file){
     const url = URL.createObjectURL(file);
-    addMsg({type:"image", src:url}, "out");
+    if(file.type.startsWith("video")) addMsg({type:"video", src:url}, "out");
+    else addMsg({type:"image", src:url}, "out");
   }
 };
 
-// --- Load messages on start ---
+// --- Modal close on click ---
+modal.onclick = () => modal.style.display = "none";
+
+// --- Load messages ---
 loadMessages();
 </script>
 
