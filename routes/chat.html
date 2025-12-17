@@ -1,43 +1,206 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Joel XMD Chat</title>
-  <style>
-    body { background:#0b0f19;color:white;font-family:sans-serif }
-    #chat { max-width:420px;margin:auto;padding:10px }
-    .msg { padding:8px;margin:6px;border-radius:8px }
-    .user { background:#2563eb;text-align:right }
-    .bot { background:#1e293b }
-    input { width:100%;padding:10px;border:none }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Joel XMD Chat</title>
+
+<style>
+:root {
+  --bg: #efeae2;
+  --header: #075e54;
+  --out: #dcf8c6;
+  --in: #ffffff;
+  --bar: #f0f0f0;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+/* HEADER */
+.header {
+  background: var(--header);
+  color: white;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.header .info h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.header .info span {
+  font-size: 12px;
+  opacity: .8;
+}
+
+/* CHAT */
+.chat {
+  padding: 12px;
+  height: calc(100vh - 130px);
+  overflow-y: auto;
+}
+
+.msg {
+  max-width: 75%;
+  padding: 8px 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  font-size: 14px;
+  position: relative;
+}
+
+.in {
+  background: var(--in);
+  border-top-left-radius: 0;
+}
+
+.out {
+  background: var(--out);
+  margin-left: auto;
+  border-top-right-radius: 0;
+}
+
+.time {
+  font-size: 10px;
+  color: #555;
+  text-align: right;
+}
+
+/* INPUT BAR */
+.input-bar {
+  background: var(--bar);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon {
+  font-size: 20px;
+  padding: 6px;
+  opacity: .7;
+}
+
+.textbox {
+  flex: 1;
+  background: white;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 6px;
+}
+
+.textbox input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  padding: 6px;
+}
+
+.send,
+.mic {
+  background: #075e54;
+  color: white;
+  border: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-size: 18px;
+}
+</style>
 </head>
+
 <body>
 
-<div id="chat"></div>
-<input id="input" placeholder="Type .menu" />
+<!-- HEADER -->
+<div class="header">
+  <img src="/icon/user.jpg">
+  <div class="info">
+    <h4>Joel XMD</h4>
+    <span>online</span>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="chat" id="chat"></div>
+
+<!-- INPUT BAR -->
+<div class="input-bar">
+  <div class="icon">＋</div>
+
+  <div class="textbox">
+    <span class="icon">😊</span>
+    <input id="input" placeholder="Type a message" />
+    <span class="icon">📎</span>
+    <span class="icon">📷</span>
+  </div>
+
+  <button class="mic" id="send">🎤</button>
+</div>
 
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
+const send = document.getElementById("send");
 
-input.addEventListener("keydown", async e => {
-  if (e.key === "Enter") {
-    const text = input.value;
-    input.value = "";
-    chat.innerHTML += `<div class="msg user">${text}</div>`;
+function timeNow() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ":" +
+         d.getMinutes().toString().padStart(2,'0');
+}
 
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ message: text })
-    });
+function addMsg(text, type) {
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.innerHTML = `
+    ${text.replace(/\n/g,"<br>")}
+    <div class="time">${timeNow()}</div>
+  `;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
 
-    const data = await res.json();
-    chat.innerHTML += `<div class="msg bot">${data.reply}</div>`;
-    chat.scrollTop = chat.scrollHeight;
-  }
+async function sendMsg() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = "";
+  addMsg(text, "out");
+
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ message: text })
+  });
+
+  const data = await res.json();
+  addMsg(data.reply || "No reply", "in");
+}
+
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMsg();
 });
+
+send.onclick = sendMsg;
 </script>
 
 </body>
