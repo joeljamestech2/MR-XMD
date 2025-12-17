@@ -1,23 +1,16 @@
 import config from "../config.cjs";
 
-const menu = async (m, Matrix) => {
+const ping = async (m, Matrix) => {
   const prefix = config.PREFIX;
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(" ")[0].toLowerCase()
     : "";
 
-  if (cmd === "menu") {
-    const text = `
-🤖 *JOEL XMD MENU*
-
-${prefix}alive
-${prefix}ping
-${prefix}menu
-`;
+  if (cmd === "ping") {
     Matrix.relayMessage(m.from, {
-      conversation: text
+      conversation: "🏓 Pong! Joel XMD is alive."
     });
   }
 };
 
-export default menu;
+export default ping;
