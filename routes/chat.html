@@ -6,267 +6,180 @@
 <title>Joel XMD Chat</title>
 
 <style>
-:root {
-  --bg: #e5ddd5;
-  --header: #075e54;
-  --out: #dcf8c6;
-  --in: #ffffff;
-  --bar: #f0f0f0;
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
-* { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont; }
-body { margin:0; background:var(--bg); }
+body {
+  margin: 0;
+  background: #0b141a;
+  color: #e9edef;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
 
-.header {
-  background: var(--header);
-  color:white;
+header {
+  background: #202c33;
   padding: 12px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  position: sticky;
-  top:0;
-  z-index: 10;
+  font-weight: bold;
+  text-align: center;
 }
 
-.header img { width:40px; height:40px; border-radius:50%; }
-.header .info h4 { margin:0; font-size:16px; }
-.header .info span { font-size:12px; opacity:.8; }
-
-.chat {
-  padding:12px;
-  height: calc(100vh - 130px);
+#chat {
+  flex: 1;
   overflow-y: auto;
-  display:flex;
-  flex-direction: column-reverse; /* bottom-up */
-  gap:6px;
+  padding: 10px;
 }
 
 .msg {
-  max-width:75%;
-  padding:8px 10px;
-  border-radius: 16px;
-  font-size:14px;
-  position: relative;
-  word-break: break-word;
-  display: inline-block;
-  cursor: default;
+  max-width: 80%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  word-wrap: break-word;
 }
 
-.in { background: var(--in); border-top-left-radius:0; align-self:flex-start; }
-.out { background: var(--out); border-top-right-radius:0; align-self:flex-end; }
-
-.time { font-size:10px; color:#555; text-align:right; margin-top:4px; }
-
-.input-bar {
-  background: var(--bar);
-  padding:6px;
-  display:flex;
-  align-items:center;
-  gap:6px;
+.user {
+  background: #005c4b;
+  margin-left: auto;
 }
 
-.icon { font-size:22px; padding:6px; cursor:pointer; opacity:.8; }
-
-.textbox {
-  flex:1;
-  background:white;
-  border-radius:20px;
-  display:flex;
-  align-items:center;
-  padding:4px 8px;
-  gap:6px;
+.bot {
+  background: #1f2c34;
+  margin-right: auto;
 }
 
-.textbox input { border:none; outline:none; flex:1; font-size:14px; padding:6px; }
-.send, .mic {
-  background:#075e54;
-  color:white;
-  border:none;
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  font-size:18px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
+.msg img,
+.msg video {
+  max-width: 100%;
+  border-radius: 8px;
 }
 
-img.message-img, video.message-video {
-  max-width: 200px;
-  border-radius: 12px;
-  margin-top:4px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-img.message-img:hover, video.message-video:hover { transform: scale(1.03); }
-
-/* FULL SCREEN MODAL */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0; top:0;
-  width:100%; height:100%;
-  background: rgba(0,0,0,0.9);
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  max-width: 90%;
-  max-height: 90%;
-}
-
-.modal-content img, .modal-content video {
+audio {
   width: 100%;
-  height: auto;
-  border-radius: 12px;
+  margin-top: 5px;
+}
+
+.file {
+  background: #111;
+  padding: 8px;
+  border-radius: 6px;
+  margin-top: 5px;
+}
+
+footer {
+  background: #202c33;
+  padding: 8px;
+  display: flex;
+  gap: 5px;
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+button {
+  background: #00a884;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <img src="/icon/user.jpg">
-  <div class="info">
-    <h4>Joel XMD</h4>
-    <span>online</span>
-  </div>
-</div>
+<header>🤖 Joel XMD Web Bot</header>
 
-<div class="chat" id="chat"></div>
+<div id="chat"></div>
 
-<div class="input-bar">
-  <div class="icon" id="plus">＋</div>
-  <div class="textbox">
-    <span class="icon" id="emoji">😊</span>
-    <input id="input" placeholder="Type a message" />
-    <span class="icon" id="attach">📎</span>
-    <span class="icon" id="camera">📷</span>
-  </div>
-  <button class="mic" id="send">🎤</button>
-</div>
-
-<input type="file" id="fileInput" style="display:none" />
-<input type="file" id="imageInput" accept="image/*,video/*" style="display:none" />
-
-<!-- FULL SCREEN MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content" id="modalContent"></div>
-</div>
+<footer>
+  <label for="file">
+    📎
+  </label>
+  <input type="file" id="file" />
+  <input type="text" id="input" placeholder="Type a command..." />
+  <button onclick="send()">Send</button>
+</footer>
 
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
-const send = document.getElementById("send");
-const fileInput = document.getElementById("fileInput");
-const imageInput = document.getElementById("imageInput");
-const modal = document.getElementById("modal");
-const modalContent = document.getElementById("modalContent");
+const fileInput = document.getElementById("file");
 
-function timeNow() {
-  const d = new Date();
-  return d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
-}
-
-// --- Persistent storage ---
-function saveMessages() { localStorage.setItem("chatMessages", chat.innerHTML); }
-function loadMessages() {
-  const data = localStorage.getItem("chatMessages");
-  if(data) chat.innerHTML = data;
-}
-
-// --- Add message ---
-function addMsg(content, type) {
+function addMessage(text, cls) {
   const div = document.createElement("div");
-  div.className = "msg " + type;
-
-  if (typeof content === "string") {
-    div.innerHTML = content.replace(/\n/g,"<br>") + `<div class="time">${timeNow()}</div>`;
-  } else if(content.type === "image") {
-    div.innerHTML = `<img src="${content.src}" class="message-img"><div class="time">${timeNow()}</div>`;
-  } else if(content.type === "video") {
-    div.innerHTML = `<video src="${content.src}" class="message-video" controls></video><div class="time">${timeNow()}</div>`;
-  } else if(content.type === "file") {
-    div.innerHTML = `<a href="${content.src}" download>${content.name}</a><div class="time">${timeNow()}</div>`;
-  }
-
-  // Add at the top of flex column-reverse container
-  chat.prepend(div);
-  saveMessages();
-
-  // Auto scroll to bottom (latest message)
+  div.className = "msg " + cls;
+  div.innerText = text;
+  chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
-
-  // Fullscreen preview
-  const media = div.querySelector("img, video");
-  if(media){
-    media.onclick = () => {
-      modalContent.innerHTML = "";
-      if(content.type==="video"){
-        const vid = document.createElement("video");
-        vid.src = content.src;
-        vid.controls = true;
-        vid.autoplay = true;
-        modalContent.appendChild(vid);
-      } else {
-        const img = document.createElement("img");
-        img.src = content.src;
-        modalContent.appendChild(img);
-      }
-      modal.style.display = "flex";
-    }
-  }
 }
 
-// --- Send text message ---
-async function sendMsg() {
+function addMedia(type, src, cls, name) {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+
+  if (type === "image") {
+    div.innerHTML = `<img src="${src}" />`;
+  } else if (type === "audio") {
+    div.innerHTML = `<audio controls src="${src}"></audio>`;
+  } else if (type === "video") {
+    div.innerHTML = `<video controls src="${src}"></video>`;
+  } else {
+    div.innerHTML = `
+      <div class="file">
+        📄 <a href="${src}" download>${name}</a>
+      </div>
+    `;
+  }
+
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function send() {
   const text = input.value.trim();
-  if(!text) return;
-  input.value = "";
-  addMsg(text, "out");
+  const file = fileInput.files[0];
 
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ message: text })
-  });
-  const data = await res.json();
-  addMsg(data.reply || "No reply", "in");
+  if (!text && !file) return;
+
+  if (text) {
+    addMessage(text, "user");
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    });
+
+    const data = await res.json();
+    addMessage(data.reply, "bot");
+    input.value = "";
+  }
+
+  if (file) {
+    const url = URL.createObjectURL(file);
+    const type = file.type;
+
+    if (type.startsWith("image")) addMedia("image", url, "user");
+    else if (type.startsWith("audio")) addMedia("audio", url, "user");
+    else if (type.startsWith("video")) addMedia("video", url, "user");
+    else addMedia("file", url, "user", file.name);
+
+    fileInput.value = "";
+  }
 }
-
-// --- Event listeners ---
-input.addEventListener("keydown", e => { if(e.key==="Enter") sendMsg(); });
-send.onclick = sendMsg;
-document.getElementById("attach").onclick = () => fileInput.click();
-document.getElementById("camera").onclick = () => imageInput.click();
-
-fileInput.onchange = (e) => {
-  const file = e.target.files[0];
-  if(file){
-    const url = URL.createObjectURL(file);
-    addMsg({type:"file", src:url, name:file.name}, "out");
-  }
-};
-
-imageInput.onchange = (e) => {
-  const file = e.target.files[0];
-  if(file){
-    const url = URL.createObjectURL(file);
-    if(file.type.startsWith("video")) addMsg({type:"video", src:url}, "out");
-    else addMsg({type:"image", src:url}, "out");
-  }
-};
-
-// --- Modal close on click ---
-modal.onclick = () => modal.style.display = "none";
-
-// --- Load messages ---
-loadMessages();
 </script>
 
 </body>
