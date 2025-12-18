@@ -6,7 +6,8 @@ const ytsCmd = async (m, gss) => {
   const cmd = m.body.startsWith(prefix)
     ? m.body.slice(prefix.length).split(" ")[0].toLowerCase()
     : "";
-
+//https://docs.some-random-api.com/endpoints/Pokemon/Moves
+  //https://okatsu-rolezapiiz.vercel.app/
   const validCommands = ["yts", "ytsearch"];
   if (!validCommands.includes(cmd)) return;
 
