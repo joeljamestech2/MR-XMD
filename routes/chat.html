@@ -1,93 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Joel XMD Web Bot</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joel XMD Chat</title>
 <style>
-* { box-sizing: border-box; font-family: Arial, sans-serif; }
+* { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
 body { margin: 0; background: #0b141a; color: #e9edef; display: flex; flex-direction: column; height: 100vh; }
 header { background: #202c33; padding: 12px; font-weight: bold; text-align: center; }
 #chat { flex: 1; overflow-y: auto; padding: 10px; }
-.msg { max-width: 75%; padding: 10px 14px; margin-bottom: 10px; border-radius: 18px; word-wrap: break-word; box-shadow: 0 2px 6px rgba(0,0,0,0.3); position: relative; }
-.msg.user { background: #005c4b; margin-left: auto; text-align: right; }
-.msg.bot { background: #1f2c34; margin-right: auto; }
-.msg img, .msg video, .msg audio { max-width: 100%; border-radius: 12px; display: block; margin-top: 5px; }
-.msg .file { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 10px; display: flex; align-items: center; gap: 10px; }
-.msg .file a { color: #fff; text-decoration: none; }
-.time { font-size: 10px; color: #999; margin-top: 4px; display: block; }
-footer { background: #202c33; padding: 8px; display: flex; gap: 5px; }
-input[type="text"] { flex: 1; padding: 8px; border-radius: 6px; border: none; }
+.msg { max-width: 80%; padding: 8px 10px; margin-bottom: 10px; border-radius: 10px; word-wrap: break-word; font-family: 'JetBrains Mono', monospace; }
+.user { background: #005c4b; margin-left: auto; }
+.bot { background: #1f2c34; margin-right: auto; }
+.msg img, .msg video { max-width: 100%; border-radius: 8px; }
+audio { width: 100%; margin-top: 5px; }
+.file { background: #111; padding: 8px; border-radius: 6px; margin-top: 5px; }
+footer { background: #202c33; padding: 8px; display: flex; gap: 5px; align-items: center; }
+input[type="text"] { flex: 1; padding: 8px; border-radius: 6px; border: none; font-family: 'JetBrains Mono', monospace; }
 input[type="file"] { display: none; }
-button { background: #00a884; border: none; padding: 8px 12px; border-radius: 6px; color: #fff; cursor: pointer; }
+button { background: #00a884; border: none; padding: 8px 12px; border-radius: 12px; color: #fff; cursor: pointer; font-family: 'JetBrains Mono', monospace; }
+#recordBtn { background: #ff4d4d; }
 </style>
 </head>
 <body>
 
 <header>🤖 Joel XMD Web Bot</header>
-
 <div id="chat"></div>
 
 <footer>
   <label for="file">📎</label>
-  <input type="file" id="file" />
-  <input type="text" id="input" placeholder="Type a message..." />
-  <button id="sendBtn">🎤</button>
+  <input type="file" id="file" multiple />
+  <input type="text" id="input" placeholder="Type a command..." />
+  <button onclick="send()">Send</button>
+  <button id="recordBtn">🎤 Record</button>
 </footer>
 
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 const fileInput = document.getElementById("file");
-const sendBtn = document.getElementById("sendBtn");
+const recordBtn = document.getElementById("recordBtn");
+let mediaRecorder;
+let audioChunks = [];
 
-function getTime() {
-  return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+// Load chat from localStorage
+let messages = JSON.parse(localStorage.getItem('messages') || '[]');
+messages.forEach(m => {
+  if (m.type === 'text') addMessage(m.content, m.sender);
+  else addMedia(m.type, m.content, m.sender, m.name);
+});
+
+// Helper: save message
+function saveMessage(type, content, sender, name='') {
+  messages.push({type, content, sender, name});
+  localStorage.setItem('messages', JSON.stringify(messages));
 }
 
-function addMessage(content, cls) {
+// Add text message
+function addMessage(text, cls) {
   const div = document.createElement("div");
   div.className = "msg " + cls;
-  div.innerHTML = content + `<span class="time">${getTime()}</span>`;
+  div.innerText = text;
   chat.appendChild(div);
-  chat.scrollTo({ top: chat.scrollHeight, behavior: "smooth" });
+  chat.scrollTop = chat.scrollHeight;
+  saveMessage('text', text, cls);
 }
 
-function send() {
+// Add media message
+function addMedia(type, src, cls, name='') {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  if (type === "image") div.innerHTML = `<img src="${src}" />`;
+  else if (type === "audio") div.innerHTML = `<audio controls src="${src}"></audio>`;
+  else if (type === "video") div.innerHTML = `<video controls src="${src}"></video>`;
+  else div.innerHTML = `<div class="file">📄 <a href="${src}" download>${name}</a></div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  saveMessage(type, src, cls, name);
+}
+
+// Send text or files
+async function send() {
   const text = input.value.trim();
-  const file = fileInput.files[0];
+  const files = Array.from(fileInput.files);
+  if (!text && files.length === 0) return;
 
-  if (!text && !file) return;
-
-  // Send text
   if (text) {
     addMessage(text, "user");
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      });
+      const data = await res.json();
+      addMessage(data.reply, "bot");
+    } catch(e) { addMessage("⚠️ Bot failed to respond", "bot"); }
     input.value = "";
   }
 
-  // Send file
-  if (file) {
+  files.forEach(file => {
     const url = URL.createObjectURL(file);
     const type = file.type;
-
-    if (type.startsWith("image")) addMessage(`<img src="${url}">`, "user");
-    else if (type.startsWith("audio")) addMessage(`<audio controls src="${url}"></audio>`, "user");
-    else if (type.startsWith("video")) addMessage(`<video controls src="${url}"></video>`, "user");
-    else addMessage(`<div class="file">📄 <a href="${url}" download="${file.name}">${file.name}</a></div>`, "user");
-
-    fileInput.value = "";
-  }
+    if (type.startsWith("image")) addMedia("image", url, "user");
+    else if (type.startsWith("audio")) addMedia("audio", url, "user");
+    else if (type.startsWith("video")) addMedia("video", url, "user");
+    else addMedia("file", url, "user", file.name);
+  });
+  fileInput.value = "";
 }
 
-// Dynamic send button icon
-input.addEventListener("input", () => {
-  sendBtn.textContent = input.value.trim() ? "📤" : "🎤";
-});
-
-// Press Enter to send
-input.addEventListener("keypress", e => { if(e.key === "Enter") send(); });
-sendBtn.addEventListener("click", send);
+// Voice recording
+recordBtn.onclick = async () => {
+  if (!mediaRecorder || mediaRecorder.state === "inactive") {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      addMedia("audio", url, "user", "voice_note.webm");
+    };
+    mediaRecorder.start();
+    recordBtn.innerText = "⏹ Stop";
+  } else {
+    mediaRecorder.stop();
+    recordBtn.innerText = "🎤 Record";
+  }
+};
 </script>
 
 </body>
