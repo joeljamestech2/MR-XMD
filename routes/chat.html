@@ -1,318 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Joel XMD Bot Web</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --wa-bg: #efeae2;
-            --wa-header: #ffffff;
-            --wa-footer: #f0f2f5;
-            --wa-user-bubble: #d9fdd3;
-            --wa-bot-bubble: #ffffff;
-            --wa-text: #111b21;
-            --wa-secondary: #667781;
-            --wa-accent: #00a884;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Joel XMD Web Bot</title>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Fira Sans, sans-serif;
-        }
-
-        body, html {
-            height: 100%;
-            background-color: var(--wa-bg);
-            overflow: hidden; /* Prevents the whole page from scrolling */
-        }
-
-        /* --- MAIN LAYOUT --- */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-blend-mode: multiply;
-        }
-
-        header {
-            background: var(--wa-header);
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            z-index: 10;
-        }
-
-        .header-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .profile-img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--wa-accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        #chat-window {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 7%;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        /* --- FOOTER / MESSAGE BAR --- */
-        footer {
-            background: var(--wa-footer);
-            padding: 10px 15px;
-            display: flex;
-            align-items: flex-end;
-            gap: 10px;
-            border-top: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .input-container {
-            flex: 1;
-            background: white;
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            padding: 5px 12px;
-            min-height: 44px;
-        }
-
-        .input-container input {
-            flex: 1;
-            border: none;
-            outline: none;
-            padding: 8px 10px;
-            font-size: 16px;
-            background: transparent;
-        }
-
-        .icon-btn {
-            color: var(--wa-secondary);
-            font-size: 20px;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .send-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: var(--wa-accent);
-            color: white;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        /* --- BUBBLES --- */
-        .msg-wrap {
-            max-width: 85%;
-            padding: 6px 10px;
-            border-radius: 8px;
-            position: relative;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-            font-size: 14.5px;
-            line-height: 1.4;
-            color: var(--wa-text);
-        }
-
-        .user-msg { align-self: flex-end; background: var(--wa-user-bubble); }
-        .bot-msg { align-self: flex-start; background: var(--wa-bot-bubble); }
-
-        .time {
-            font-size: 10px;
-            color: var(--wa-secondary);
-            float: right;
-            margin-top: 4px;
-            margin-left: 8px;
-        }
-
-        .ticks { color: #53bdeb; margin-left: 3px; }
-
-        /* Media Styles */
-        .msg-wrap img, .msg-wrap video {
-            max-width: 100%;
-            border-radius: 6px;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .file-box {
-            display: flex;
-            align-items: center;
-            background: rgba(0,0,0,0.05);
-            padding: 10px;
-            border-radius: 6px;
-            gap: 12px;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        #file-input { display: none; }
-
-        .encryption-note {
-            background: #fff5c4;
-            font-size: 12px;
-            padding: 8px;
-            border-radius: 8px;
-            text-align: center;
-            align-self: center;
-            margin-bottom: 10px;
-            max-width: 90%;
-        }
-    </style>
+<style>
+* { box-sizing: border-box; font-family: Arial, sans-serif; }
+body { margin: 0; background: #0b141a; color: #e9edef; display: flex; flex-direction: column; height: 100vh; }
+header { background: #202c33; padding: 12px; font-weight: bold; text-align: center; }
+#chat { flex: 1; overflow-y: auto; padding: 10px; }
+.msg { max-width: 75%; padding: 10px 14px; margin-bottom: 10px; border-radius: 18px; word-wrap: break-word; box-shadow: 0 2px 6px rgba(0,0,0,0.3); position: relative; }
+.msg.user { background: #005c4b; margin-left: auto; text-align: right; }
+.msg.bot { background: #1f2c34; margin-right: auto; }
+.msg img, .msg video, .msg audio { max-width: 100%; border-radius: 12px; display: block; margin-top: 5px; }
+.msg .file { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 10px; display: flex; align-items: center; gap: 10px; }
+.msg .file a { color: #fff; text-decoration: none; }
+.time { font-size: 10px; color: #999; margin-top: 4px; display: block; }
+footer { background: #202c33; padding: 8px; display: flex; gap: 5px; }
+input[type="text"] { flex: 1; padding: 8px; border-radius: 6px; border: none; }
+input[type="file"] { display: none; }
+button { background: #00a884; border: none; padding: 8px 12px; border-radius: 6px; color: #fff; cursor: pointer; }
+</style>
 </head>
 <body>
 
-<div class="app-container">
-    <header>
-        <div class="header-info">
-            <i class="fas fa-arrow-left" style="color: var(--wa-secondary)"></i>
-            <div class="profile-img"><i class="fas fa-robot"></i></div>
-            <div>
-                <div style="font-weight: 600;">Joel XMD Bot</div>
-                <div style="font-size: 12px; color: var(--wa-secondary);" id="status">Online</div>
-            </div>
-        </div>
-        <div style="display: flex; gap: 20px; color: var(--wa-secondary);">
-            <i class="fas fa-video"></i>
-            <i class="fas fa-phone"></i>
-            <i class="fas fa-ellipsis-v"></i>
-        </div>
-    </header>
+<header>🤖 Joel XMD Web Bot</header>
 
-    <div id="chat-window">
-        <div class="encryption-note">
-            <i class="fas fa-lock"></i> Messages and calls are end-to-end encrypted.
-        </div>
-    </div>
+<div id="chat"></div>
 
-    <footer>
-        <div class="input-container">
-            <i class="far fa-smile icon-btn"></i>
-            <input type="text" id="msgInput" placeholder="Message" oninput="updateIcon()" onkeypress="checkEnter(event)">
-            <label for="file-input"><i class="fas fa-paperclip icon-btn"></i></label>
-            <input type="file" id="file-input" onchange="handleFile(this)">
-            <i class="fas fa-camera icon-btn"></i>
-        </div>
-        <button class="send-btn" onclick="sendText()">
-            <i class="fas fa-microphone" id="action-icon"></i>
-        </button>
-    </footer>
-</div>
+<footer>
+  <label for="file">📎</label>
+  <input type="file" id="file" />
+  <input type="text" id="input" placeholder="Type a message..." />
+  <button id="sendBtn">🎤</button>
+</footer>
 
 <script>
-    const chatWindow = document.getElementById('chat-window');
-    const msgInput = document.getElementById('msgInput');
-    const actionIcon = document.getElementById('action-icon');
-    const status = document.getElementById('status');
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const fileInput = document.getElementById("file");
+const sendBtn = document.getElementById("sendBtn");
 
-    function getTime() {
-        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-    }
+function getTime() {
+  return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
 
-    function updateIcon() {
-        actionIcon.className = msgInput.value.trim() ? "fas fa-paper-plane" : "fas fa-microphone";
-    }
+function addMessage(content, cls) {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  div.innerHTML = content + `<span class="time">${getTime()}</span>`;
+  chat.appendChild(div);
+  chat.scrollTo({ top: chat.scrollHeight, behavior: "smooth" });
+}
 
-    function checkEnter(e) {
-        if (e.key === 'Enter') sendText();
-    }
+function send() {
+  const text = input.value.trim();
+  const file = fileInput.files[0];
 
-    function appendMessage(html, type) {
-        const div = document.createElement('div');
-        div.className = `msg-wrap ${type === 'user' ? 'user-msg' : 'bot-msg'}`;
-        
-        const ticks = type === 'user' ? '<i class="fas fa-check-double ticks"></i>' : '';
-        
-        div.innerHTML = `
-            ${html}
-            <div class="time">${getTime()}${ticks}</div>
-        `;
-        
-        chatWindow.appendChild(div);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
+  if (!text && !file) return;
 
-    function sendText() {
-        const text = msgInput.value.trim();
-        if (!text) {
-            alert("Hold to record Voice Note (Simulation)");
-            return;
-        }
-        appendMessage(`<span>${text}</span>`, 'user');
-        msgInput.value = '';
-        updateIcon();
-        botResponse(text);
-    }
+  // Send text
+  if (text) {
+    addMessage(text, "user");
+    input.value = "";
+  }
 
-    function handleFile(input) {
-        const file = input.files[0];
-        if (!file) return;
+  // Send file
+  if (file) {
+    const url = URL.createObjectURL(file);
+    const type = file.type;
 
-        const url = URL.createObjectURL(file);
-        let content = "";
+    if (type.startsWith("image")) addMessage(`<img src="${url}">`, "user");
+    else if (type.startsWith("audio")) addMessage(`<audio controls src="${url}"></audio>`, "user");
+    else if (type.startsWith("video")) addMessage(`<video controls src="${url}"></video>`, "user");
+    else addMessage(`<div class="file">📄 <a href="${url}" download="${file.name}">${file.name}</a></div>`, "user");
 
-        if (file.type.startsWith('image/')) {
-            content = `<img src="${url}">`;
-        } else if (file.type.startsWith('video/')) {
-            content = `<video controls src="${url}"></video>`;
-        } else if (file.type.startsWith('audio/')) {
-            content = `<audio controls src="${url}" style="width:200px; height:40px;"></audio>`;
-        } else {
-            content = `
-                <a href="${url}" download="${file.name}" class="file-box">
-                    <i class="fas fa-file-code fa-2x"></i>
-                    <div><b>${file.name}</b><br><small>Application/Document</small></div>
-                </a>`;
-        }
-        
-        appendMessage(content, 'user');
-        botResponse("file");
-    }
+    fileInput.value = "";
+  }
+}
 
-    function botResponse(trigger) {
-        status.innerText = "typing...";
-        setTimeout(() => {
-            const replies = [
-                { type: 'text', val: 'I have received your request!' },
-                { type: 'audio', val: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-                { type: 'video', val: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-                { type: 'app', val: 'Bot_v2.apk' }
-            ];
+// Dynamic send button icon
+input.addEventListener("input", () => {
+  sendBtn.textContent = input.value.trim() ? "📤" : "🎤";
+});
 
-            const r = replies[Math.floor(Math.random() * replies.length)];
-
-            if (r.type === 'text') appendMessage(`<span>${r.val}</span>`, 'bot');
-            else if (r.type === 'audio') appendMessage(`<audio controls src="${r.val}" style="width:200px;"></audio><br>Voice Note`, 'bot');
-            else if (r.type === 'video') appendMessage(`<video controls src="${r.val}"></video>Video Note`, 'bot');
-            else if (r.type === 'app') appendMessage(`<div class="file-box"><i class="fab fa-android fa-2x"></i><div><b>${r.val}</b><br><small>12MB • APK</small></div></div>`, 'bot');
-
-            status.innerText = "Online";
-        }, 1500);
-    }
+// Press Enter to send
+input.addEventListener("keypress", e => { if(e.key === "Enter") send(); });
+sendBtn.addEventListener("click", send);
 </script>
 
 </body>
