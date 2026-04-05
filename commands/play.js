@@ -16,20 +16,16 @@ const playMp3 = async (m, Matrix) => {
     return;
   }
 
-  // Immediate feedback
+  // Feedback: searching
   await Matrix.relayMessage(m.from, {
-    conversation: `🎵 Searching for *"${query}"*...\nPlease wait ⏳`
+    conversation: `🎵 Searching for *${query}*...\nPlease wait ⏳`
   });
 
   try {
-    /* ===============================
-       YOUTUBE SEARCH (YTS CORE)
-    ================================ */
+    // YT search with 1-minute timeout
     const search = await Promise.race([
       yts(query),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("YTS_TIMEOUT")), 60000)
-      )
+      new Promise((_, reject) => setTimeout(() => reject(new Error("YTS_TIMEOUT")), 60000))
     ]);
 
     const video = search.videos[0];
@@ -40,19 +36,14 @@ const playMp3 = async (m, Matrix) => {
       return;
     }
 
-    /* ===============================
-       MP3 DOWNLOAD API (FETCH)
-    ================================ */
-    const apiUrl =
-      `https://iamtkm.vercel.app/downloaders/ytmp3` +
-      `?apikey=tkm&url=${encodeURIComponent(video.url)}`;
-
+    // MP3 Download API
+    const apiUrl = `https://iamtkm.vercel.app/downloaders/ytmp3?apikey=tkm&url=${encodeURIComponent(video.url)}`;
     const apiRes = await fetch(apiUrl);
     const apiData = await apiRes.json();
 
     if (!apiData.status || !apiData.data?.url) {
       await Matrix.relayMessage(m.from, {
-        conversation: "❌ Failed to generate MP3. Please try again later."
+        conversation: "❌ Failed to generate MP3. Try again later."
       });
       return;
     }
@@ -60,15 +51,12 @@ const playMp3 = async (m, Matrix) => {
     const mp3Url = apiData.data.url;
     const title = apiData.data.title || video.title;
 
-    /* ===============================
-       DOWNLOAD AUDIO AS BUFFER
-    ================================ */
+    // Fetch MP3 buffer
     const audioRes = await fetch(mp3Url);
-    const audioBuffer = Buffer.from(await audioRes.arrayBuffer());
+    const arrayBuffer = await audioRes.arrayBuffer();
+    const audioBuffer = Buffer.from(arrayBuffer);
 
-    /* ===============================
-       SEND AUDIO
-    ================================ */
+    // Send audio
     await Matrix.relayMessage(m.from, {
       conversation: `🎶 *${title}*`,
       audio: audioBuffer,
@@ -78,12 +66,9 @@ const playMp3 = async (m, Matrix) => {
 
   } catch (err) {
     console.error("PLAY CMD ERROR:", err);
-
-    const msg =
-      err.message === "YTS_TIMEOUT"
-        ? "⏳ Search took too long (over 1 minute). Please try again."
-        : "❌ An error occurred while processing the song.";
-
+    const msg = err.message === "YTS_TIMEOUT"
+      ? "⏳ Search took too long (over 1 min). Try again."
+      : "❌ An error occurred while processing the song.";
     await Matrix.relayMessage(m.from, { conversation: msg });
   }
 };
